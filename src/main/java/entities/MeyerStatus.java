@@ -15,15 +15,15 @@ public class MeyerStatus {
     private int rolledValue;
     private Player currentPlayer;
     private Player prevPlayer;
-    private Player loserOfRound;
+    private boolean endOfRound;
     
-    public MeyerStatus(boolean detEllerDerover, int toldValue, int rolledValue, Player currentPlayer, Player prevPlayer, Player loserOfRound) {
+    public MeyerStatus(boolean detEllerDerover, int toldValue, int rolledValue, Player currentPlayer, Player prevPlayer, boolean endOfRound) {
         this.detEllerDerover = detEllerDerover;
         this.toldValue = toldValue;
         this.rolledValue = rolledValue;
         this.currentPlayer = currentPlayer;
         this.prevPlayer = prevPlayer;
-        this.loserOfRound = loserOfRound;
+        this.endOfRound = endOfRound;
     }
 
     public boolean isDetEllerDerover() {
@@ -65,8 +65,8 @@ public class MeyerStatus {
     public void setPrevPlayer(Player prevPlayer) {
         this.prevPlayer = prevPlayer;
     }
-    
-    public Player getLoserOfRound() {
-        return this.loserOfRound;
+
+    public boolean isEndOfRound() {
+        return endOfRound;
     }
 }

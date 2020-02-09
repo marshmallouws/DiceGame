@@ -19,7 +19,7 @@ import java.util.Scanner;
 public class MeyerController {
 
     private DiceCup diceCup = new DiceCup();
-    private Scanner scan = new Scanner(System.in);
+    private static final Scanner SCAN = new Scanner(System.in);
     private Player[] players;
 
     public void printMenu() {
@@ -71,8 +71,8 @@ public class MeyerController {
         int told = 0;
         System.out.println(player.getName() + "'s turn");
         System.out.println("Press enter to roll dice.");
-        scan.nextLine();
-        scan.nextLine();
+        SCAN.nextLine();
+        SCAN.nextLine();
 
         roll = diceCup.roll();
         System.out.println("You rolled: " + roll);
@@ -81,7 +81,7 @@ public class MeyerController {
         System.out.println("You have following options:");
         System.out.println("\t1. Say the actual dice values");
         System.out.println("\t2. Lie!");
-        int choice = scan.nextInt();
+        int choice = SCAN.nextInt();
         switch (choice) {
             case 1:
                 told = roll;
@@ -89,11 +89,10 @@ public class MeyerController {
             case 2:
                 told = lie(0);
         }
-        return new MeyerStatus(false, told, roll, null, player, null);
+        return new MeyerStatus(false, told, roll, null, player, false);
     }
 
     public MeyerStatus followingTurns(MeyerStatus prevStatus, Player player) {
-
         Player prevPlayer = prevStatus.getPrevPlayer();
         boolean detEllerDerover = prevStatus.isDetEllerDerover();
         int prevRoll = prevStatus.getRolledValue();
@@ -102,6 +101,7 @@ public class MeyerController {
         boolean resEllerDerover = false;
         int resRoll = 0;
         int resTold = 0;
+        boolean resEndOfRound = false;
 
         System.out.println(player.getName() + "'s turn");
         System.out.println("");
@@ -118,7 +118,7 @@ public class MeyerController {
         System.out.println("\t1. Roll");
         System.out.println("\t2. Lift dice cup");
 
-        int choice = scan.nextInt();
+        int choice = SCAN.nextInt();
         switch (choice) {
             case 1:
                 resRoll = diceCup.roll();
@@ -130,13 +130,13 @@ public class MeyerController {
                     System.out.println("You have following options:");
                     System.out.println("\t1. Say the actual dice values");
                     System.out.println("\t2. Lie!");
-                    int choice1 = scan.nextInt();
+                    int choice1 = SCAN.nextInt();
                     switch (choice1) {
                         case 1:
-                            resTold = resRoll;
+                            resTold = resRoll; // Tell the same as the dice value
                             break;
                         case 2:
-                            resRoll = lie(prevTold);
+                            resTold = lie(prevTold);
                             break;
                     }
                 } else {
@@ -145,7 +145,7 @@ public class MeyerController {
                     System.out.println("You have following options: ");
                     System.out.println("\t1. Lie");
                     System.out.println("\t2. Roll and pass dice cup");
-                    int choice2 = scan.nextInt();
+                    int choice2 = SCAN.nextInt();
                     switch (choice2) {
                         case 1:
                             resTold = lie(prevTold);
@@ -159,36 +159,41 @@ public class MeyerController {
                 break;
 
             case 2:
-                System.out.println("Actual roll value: " + prevRoll);
-                if (prevRoll != prevTold) {
-                    if (prevTold == 21) {
-                        prevPlayer.loseLives(2);
-                        System.out.println(prevPlayer.getName() + " lost 2 life. The score is following:");
-                    }
-                    prevPlayer.loseLives(1);
-                    System.out.println(prevPlayer.getName() + " lost a life. The score is following:");
-                } else if (prevRoll == 21) {
-                    System.out.println(prevPlayer.getName() + " rolled Meyer. You lose 2 lives. The score is following:");
-                    player.loseLives(2);
-                } else {
-                    player.loseLives(1);
-                    System.out.println(player.getName() + " lost a life. The score is following:");
-                }
-
-                for (Player p : players) {
-                    System.out.println(p.getName() + ": " + p.getLives());
-                }
+                endOfRound(player, prevPlayer, prevTold, prevRoll);
+                resEndOfRound = true;
                 break;
 
         }
-        return new MeyerStatus(resEllerDerover, resTold, resRoll, null, player, null);
+        return new MeyerStatus(resEllerDerover, resTold, resRoll, null, player, resEndOfRound);
+    }
+
+    private void endOfRound(Player player, Player prevPlayer, int prevTold, int prevRoll) {
+        System.out.println("Actual roll value: " + prevRoll);
+        if (prevRoll != prevTold) {
+            if (prevTold == 21) {
+                prevPlayer.loseLives(2);
+                System.out.println(prevPlayer.getName() + " lost 2 life. The score is following:");
+            }
+            prevPlayer.loseLives(1);
+            System.out.println(prevPlayer.getName() + " lost a life. The score is following:");
+        } else if (prevRoll == 21) {
+            System.out.println(prevPlayer.getName() + " rolled Meyer. You lose 2 lives. The score is following:");
+            player.loseLives(2);
+        } else {
+            player.loseLives(1);
+            System.out.println(player.getName() + " lost a life. The score is following:");
+        }
+
+        for (Player p : players) {
+            System.out.println(p.getName() + ": " + p.getLives());
+        }
     }
 
     public int lie(int prevTold) {
         int res;
         while (true) {
             System.out.println("Write the value you want to tell");
-            res = scan.nextInt();
+            res = SCAN.nextInt();
             if (isHigherOrEqual(res, prevTold)) {
                 break;
             }
@@ -198,7 +203,7 @@ public class MeyerController {
 
     public void oneGiantMotherFunc() {
         System.out.println("Choose number of players from 2-6");
-        int noOfPlayers = scan.nextInt();
+        int noOfPlayers = SCAN.nextInt();
         players = new Player[noOfPlayers];
 
         for (int i = 0; i < noOfPlayers; i++) {
@@ -215,6 +220,9 @@ public class MeyerController {
                 } else {
                     m.setCurrentPlayer(player);
                     m = followingTurns(m, player);
+                    if(m.isEndOfRound()) {
+                        break;
+                    }
                 }
             }
         }
